@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/components/ui/use-toast'
 import { useAuth } from '@/hooks/useAuth'
-import { auth, db } from '@/lib/firebase'
+import { db } from '@/lib/firebase'
 import { updateProfile, updateEmail, updatePassword } from 'firebase/auth'
 import { doc, updateDoc } from 'firebase/firestore'
 

@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { formatPrice } from '@/lib/utils';
-import { Shield, Smartphone, Users, Zap, Award, Clock, Star, ChevronRight } from 'lucide-react';
+import { Shield, Users, Zap, Award, Clock, Star, ChevronRight } from 'lucide-react';
 import { Toast } from '@/components/ui/toast';
 import Image from 'next/image';
 
@@ -140,14 +140,14 @@ export default function HomePage() {
                   }}
                   className="bg-gradient-to-br from-primary-400 to-purple-400 rounded-3xl p-8 shadow-2xl"
                 >
-                  <div className="bg-white rounded-2xl p-4 shadow-xl">
-                    <div className="aspect-[3/4] bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center relative">
+                  <div className="bg-white rounded-2xl p-2 shadow-xl">
+                    <div className="aspect-[3/4] bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center relative overflow-hidden">
                       <Image
-                        src="/images/smarteen-phone.svg"
+                        src="/images/smarteen.svg"
                         alt="SmarTeen Phone"
-                        width={180}
-                        height={360}
-                        className="object-contain"
+                        fill
+                        className="object-cover p-8 bg-white rounded-xl shadow-lg"
+                        priority
                       />
                     </div>
                   </div>
