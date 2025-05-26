@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { CreditCard, Calendar, CheckCircle2, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -35,7 +35,7 @@ const statusLabels = {
   active: 'Actif',
   canceled: 'Annulé',
   past_due: 'En retard',
-  trialing: 'Période d\'essai'
+  trialing: 'Période d&apos;essai'
 }
 
 const statusColors = {
@@ -53,15 +53,7 @@ export default function SubscriptionPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    if (!user) {
-      router.push('/login')
-      return
-    }
-    fetchSubscriptionData()
-  }, [user, router])
-
-  const fetchSubscriptionData = async () => {
+  const fetchSubscriptionData = useCallback(async () => {
     if (!user) return
 
     try {
@@ -102,13 +94,21 @@ export default function SubscriptionPage() {
       console.error('Error fetching subscription data:', error)
       toast({
         title: 'Erreur',
-        description: 'Impossible de charger les données d\'abonnement.',
+        description: 'Impossible de charger les données d&apos;abonnement.',
         variant: 'destructive',
       })
     } finally {
       setLoading(false)
     }
-  }
+  }, [user, toast])
+
+  useEffect(() => {
+    if (!user) {
+      router.push('/login')
+      return
+    }
+    fetchSubscriptionData()
+  }, [user, router, fetchSubscriptionData])
 
   const handleManageSubscription = async () => {
     try {
@@ -189,11 +189,11 @@ export default function SubscriptionPage() {
 
                 <div className="flex space-x-4">
                   <Button onClick={handleManageSubscription}>
-                    Gérer l'abonnement
+                    Gérer l&apos;abonnement
                   </Button>
                   {subscription.cancelAtPeriodEnd && (
                     <Button variant="outline" onClick={handleManageSubscription}>
-                      Réactiver l'abonnement
+                      Réactiver l&apos;abonnement
                     </Button>
                   )}
                 </div>
@@ -253,7 +253,7 @@ export default function SubscriptionPage() {
             <CardContent className="text-center py-12">
               <CreditCard className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground mb-4">
-                Vous n'avez pas d'abonnement actif
+                Vous n&apos;avez pas d&apos;abonnement actif
               </p>
               <Button onClick={() => router.push('/pricing')}>
                 Voir les offres

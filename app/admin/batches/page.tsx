@@ -48,7 +48,7 @@ export default function AdminBatchesPage() {
       loadBatches();
     } catch (error) {
       console.error('Erreur expédition lot:', error);
-      alert('Erreur lors de l\'expédition');
+      alert('Erreur lors de l&apos;expédition');
     }
   };
 
@@ -173,7 +173,7 @@ export default function AdminBatchesPage() {
                     <div className="mt-4 p-4 bg-yellow-50 rounded-lg">
                       <p className="text-sm text-yellow-800">
                         <strong>En cours de collecte :</strong> Il manque {batch.targetCount - batch.currentCount} commandes 
-                        pour compléter ce lot et déclencher l'expédition.
+                        pour compléter ce lot et déclencher l&apos;expédition.
                       </p>
                     </div>
                   )}

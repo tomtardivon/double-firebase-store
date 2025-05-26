@@ -122,7 +122,7 @@ export default function AboutPage() {
               <h2 className="text-3xl font-bold mb-6">Notre histoire</h2>
               <div className="space-y-4 text-gray-600">
                 <p>
-                  SmarTeen est né d'un constat simple : les parents sont inquiets 
+                  SmarTeen est né d&apos;un constat simple : les parents sont inquiets 
                   de donner un smartphone à leurs enfants, mais ces derniers en 
                   ont besoin pour rester connectés et apprendre.
                 </p>
@@ -130,12 +130,12 @@ export default function AboutPage() {
                   En 2021, Marie Dupont, mère de trois enfants et experte en 
                   cybersécurité, a décidé de créer une solution qui réconcilie 
                   sécurité et autonomie. Avec une équipe passionnée de parents, 
-                  d'éducateurs et de technologues, SmarTeen a vu le jour.
+                  d&apos;éducateurs et de technologues, SmarTeen a vu le jour.
                 </p>
                 <p>
-                  Aujourd'hui, nous sommes fiers d'accompagner des milliers de 
+                  Aujourd&apos;hui, nous sommes fiers d&apos;accompagner des milliers de 
                   familles dans leur transition numérique, en offrant un produit 
-                  qui grandit avec l'enfant.
+                  qui grandit avec l&apos;enfant.
                 </p>
               </div>
             </motion.div>

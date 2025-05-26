@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
@@ -50,15 +50,7 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    if (!user) {
-      router.push('/login')
-      return
-    }
-    fetchOrders()
-  }, [user, router])
-
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     if (!user) return
 
     try {
@@ -83,7 +75,15 @@ export default function OrdersPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [user])
+
+  useEffect(() => {
+    if (!user) {
+      router.push('/login')
+      return
+    }
+    fetchOrders()
+  }, [user, router, fetchOrders])
 
   if (loading) {
     return (
@@ -102,7 +102,7 @@ export default function OrdersPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold">Mes commandes</h1>
-            <p className="text-muted-foreground">Consultez l'historique de vos achats</p>
+            <p className="text-muted-foreground">Consultez l&apos;historique de vos achats</p>
           </div>
         </div>
 
@@ -111,7 +111,7 @@ export default function OrdersPage() {
             <CardContent className="text-center py-12">
               <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground mb-4">
-                Vous n'avez pas encore passé de commande
+                Vous n&apos;avez pas encore passé de commande
               </p>
               <Button onClick={() => router.push('/products')}>
                 Découvrir nos produits

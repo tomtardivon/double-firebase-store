@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, Edit2, Trash2, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -36,15 +36,7 @@ export default function ChildrenPage() {
     gender: 'male' as 'male' | 'female' | 'other',
   })
 
-  useEffect(() => {
-    if (!user) {
-      router.push('/login')
-      return
-    }
-    fetchChildren()
-  }, [user, router])
-
-  const fetchChildren = async () => {
+  const fetchChildren = useCallback(async () => {
     if (!user) return
 
     try {
@@ -77,7 +69,15 @@ export default function ChildrenPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [user, toast])
+
+  useEffect(() => {
+    if (!user) {
+      router.push('/login')
+      return
+    }
+    fetchChildren()
+  }, [user, router, fetchChildren])
 
   const calculateAge = (birthDate: Date): number => {
     const today = new Date()
@@ -207,7 +207,7 @@ export default function ChildrenPage() {
             <CardContent className="text-center py-12">
               <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground mb-4">
-                Vous n'avez pas encore ajouté d'enfant
+                Vous n&apos;avez pas encore ajouté d&apos;enfant
               </p>
               <Button
                 onClick={() => {
@@ -262,7 +262,7 @@ export default function ChildrenPage() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
-                {editingChild ? 'Modifier l\'enfant' : 'Ajouter un enfant'}
+                {editingChild ? 'Modifier l&apos;enfant' : 'Ajouter un enfant'}
               </DialogTitle>
               <DialogDescription>
                 {editingChild 
@@ -272,7 +272,7 @@ export default function ChildrenPage() {
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Nom de l'enfant</Label>
+                <Label htmlFor="name">Nom de l&apos;enfant</Label>
                 <Input
                   id="name"
                   value={formData.name}

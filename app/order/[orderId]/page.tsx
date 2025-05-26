@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge'
 import { db } from '@/lib/firebase'
 import { doc, getDoc } from 'firebase/firestore'
 import { useAuth } from '@/hooks/useAuth'
+import Image from 'next/image'
 
 interface OrderItem {
   id: string
@@ -146,10 +147,12 @@ export default function OrderDetailsPage() {
                 {order.items.map((item) => (
                   <div key={item.id} className="flex items-center space-x-4">
                     {item.image && (
-                      <img
+                      <Image
                         src={item.image}
                         alt={item.name}
-                        className="h-16 w-16 rounded-md object-cover"
+                        width={64}
+                        height={64}
+                        className="rounded-md object-cover"
                       />
                     )}
                     <div className="flex-1">

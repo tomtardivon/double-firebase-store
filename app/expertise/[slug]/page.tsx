@@ -150,8 +150,9 @@ export async function generateStaticParams() {
   }))
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const article = articles[params.slug as keyof typeof articles]
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const resolvedParams = await params
+  const article = articles[resolvedParams.slug as keyof typeof articles]
   
   if (!article) {
     return {
@@ -165,8 +166,9 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   }
 }
 
-export default function ArticlePage({ params }: { params: { slug: string } }) {
-  const article = articles[params.slug as keyof typeof articles]
+export default async function ArticlePage({ params }: { params: Promise<{ slug: string }> }) {
+  const resolvedParams = await params
+  const article = articles[resolvedParams.slug as keyof typeof articles]
 
   if (!article) {
     notFound()

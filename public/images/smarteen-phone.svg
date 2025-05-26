@@ -1,0 +1,46 @@
+<svg width="240" height="480" viewBox="0 0 240 480" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Phone Frame -->
+  <rect x="10" y="10" width="220" height="460" rx="30" fill="#1a1a1a" stroke="#333" stroke-width="2"/>
+  
+  <!-- Screen -->
+  <rect x="20" y="60" width="200" height="360" rx="10" fill="#000"/>
+  
+  <!-- Screen Content -->
+  <rect x="20" y="60" width="200" height="360" rx="10" fill="url(#screenGradient)"/>
+  
+  <!-- Top Notch -->
+  <rect x="85" y="25" width="70" height="25" rx="12" fill="#000"/>
+  
+  <!-- Speaker -->
+  <rect x="100" y="35" width="40" height="4" rx="2" fill="#333"/>
+  
+  <!-- Camera -->
+  <circle cx="120" cy="37" r="6" fill="#222"/>
+  <circle cx="120" cy="37" r="4" fill="#333"/>
+  
+  <!-- Home Indicator -->
+  <rect x="95" y="440" width="50" height="4" rx="2" fill="#666"/>
+  
+  <!-- SmarTeen Logo/Text on Screen -->
+  <text x="120" y="250" font-family="Arial, sans-serif" font-size="24" fill="white" text-anchor="middle" font-weight="bold">SmarTeen</text>
+  
+  <!-- Shield Icon -->
+  <g transform="translate(95, 180)">
+    <path d="M25 5 L25 20 Q25 35 12.5 40 Q0 35 0 20 L0 5 L12.5 0 Z" fill="#4CAF50" stroke="#45a049" stroke-width="2"/>
+    <path d="M5 15 L10 20 L20 10" stroke="white" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  
+  <!-- Side Buttons -->
+  <rect x="0" y="120" width="10" height="40" rx="2" fill="#333"/>
+  <rect x="0" y="170" width="10" height="30" rx="2" fill="#333"/>
+  <rect x="0" y="210" width="10" height="30" rx="2" fill="#333"/>
+  <rect x="230" y="150" width="10" height="60" rx="2" fill="#333"/>
+  
+  <!-- Gradient Definition -->
+  <defs>
+    <linearGradient id="screenGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+</svg>

@@ -106,7 +106,7 @@ export const signInWithGoogle = async () => {
     const user = result.user;
     
     // 2. Vérifier si c'est un nouvel utilisateur
-    const isNewUser = result._tokenResponse?.isNewUser || false;
+    const isNewUser = (result as any)._tokenResponse?.isNewUser || false;
     
     // 3. Génération du token pour le projet shop
     const shopToken = await generateShopToken(user);

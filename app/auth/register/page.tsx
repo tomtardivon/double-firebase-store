@@ -28,7 +28,7 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { register: signUp, loginWithGoogle, isAuthenticated, user } = useAuth();
+  const { register: signUp, loginWithGoogle, isAuthenticated } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -80,7 +80,7 @@ export default function RegisterPage() {
       if (error.code === 'auth/email-already-in-use') {
         setError('Cette adresse email est déjà utilisée');
       } else {
-        setError(error.message || 'Erreur lors de l\'inscription');
+        setError(error.message || 'Erreur lors de l&apos;inscription');
       }
       setIsLoading(false);
     }
