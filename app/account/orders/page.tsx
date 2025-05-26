@@ -9,45 +9,55 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useAuth } from '@/hooks/useAuth'
-import { db } from '@/lib/firebase'
+import { shopDb } from '@/lib/firebase/config'
 import { collection, query, where, orderBy, getDocs } from 'firebase/firestore'
 
-interface OrderItem {
+interface SmarTeenOrder {
   id: string
-  name: string
-  price: number
-  quantity: number
-}
-
-interface Order {
-  id: string
+  orderNumber: string
   userId: string
-  items: OrderItem[]
-  amount: number
-  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
-  createdAt: any
+  status: 'pending' | 'confirmed' | 'processed' | 'shipped' | 'delivered' | 'activated'
+  product: {
+    name: string
+    devicePrice: number
+    subscriptionPrice: number
+  }
+  child: {
+    firstName: string
+    age: number
+    protectionLevel: string
+  }
+  timeline: {
+    ordered: any
+    confirmed?: any
+    processed?: any
+    shipped?: any
+    delivered?: any
+  }
 }
 
 const statusLabels = {
-  pending: 'En attente',
-  processing: 'En cours de traitement',
+  pending: 'En attente de paiement',
+  confirmed: 'Confirmée',
+  processed: 'En cours de traitement',
   shipped: 'Expédiée',
   delivered: 'Livrée',
-  cancelled: 'Annulée'
+  activated: 'Abonnement activé'
 }
 
 const statusColors = {
   pending: 'secondary',
-  processing: 'default',
+  confirmed: 'default',
+  processed: 'default',
   shipped: 'default',
   delivered: 'default',
-  cancelled: 'destructive'
+  activated: 'default'
 } as const
 
 export default function OrdersPage() {
   const router = useRouter()
   const { user } = useAuth()
-  const [orders, setOrders] = useState<Order[]>([])
+  const [orders, setOrders] = useState<SmarTeenOrder[]>([])
   const [loading, setLoading] = useState(true)
 
   const fetchOrders = useCallback(async () => {
@@ -55,18 +65,18 @@ export default function OrdersPage() {
 
     try {
       const q = query(
-        collection(db, 'orders'),
+        collection(shopDb, 'smarteenOrders'),
         where('userId', '==', user.uid),
-        orderBy('createdAt', 'desc')
+        orderBy('timeline.ordered', 'desc')
       )
       const querySnapshot = await getDocs(q)
-      const ordersData: Order[] = []
+      const ordersData: SmarTeenOrder[] = []
       
       querySnapshot.forEach((doc) => {
         ordersData.push({
           id: doc.id,
           ...doc.data()
-        } as Order)
+        } as SmarTeenOrder)
       })
       
       setOrders(ordersData)
@@ -126,10 +136,10 @@ export default function OrdersPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <CardTitle className="text-lg">
-                        Commande #{order.id.slice(-8)}
+                        Commande #{order.orderNumber}
                       </CardTitle>
                       <CardDescription>
-                        {format(order.createdAt.toDate(), 'PPP', { locale: fr })}
+                        {format(order.timeline.ordered.toDate(), 'PPP', { locale: fr })}
                       </CardDescription>
                     </div>
                     <div className="flex items-center space-x-4">
@@ -150,14 +160,14 @@ export default function OrdersPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-muted-foreground">
-                        {order.items.length} article{order.items.length > 1 ? 's' : ''}
+                        Pour {order.child.firstName}, {order.child.age} ans
                       </p>
                       <p className="text-sm">
-                        {order.items.map(item => item.name).join(', ')}
+                        {order.product.name} - Protection {order.child.protectionLevel}
                       </p>
                     </div>
                     <p className="text-lg font-medium">
-                      {order.amount / 100} €
+                      {order.product.devicePrice} €
                     </p>
                   </div>
                 </CardContent>

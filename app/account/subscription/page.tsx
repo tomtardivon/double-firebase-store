@@ -8,19 +8,26 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/components/ui/use-toast'
 import { useAuth } from '@/hooks/useAuth'
-import { db } from '@/lib/firebase'
+import { shopDb } from '@/lib/firebase/config'
 import { doc, getDoc, collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
-interface Subscription {
+interface SmarTeenSubscription {
   id: string
   userId: string
-  status: 'active' | 'canceled' | 'past_due' | 'trialing'
-  currentPeriodEnd: any
-  priceId: string
-  productId: string
-  cancelAtPeriodEnd: boolean
+  orderId: string
+  stripeSubscriptionId: string
+  status: 'pending' | 'active' | 'cancelled'
+  activation: {
+    method: string
+    actualDate?: any
+    cancelledDate?: any
+  }
+  billing: {
+    amount: number
+    nextBilling?: any
+  }
 }
 
 interface Invoice {
@@ -32,24 +39,22 @@ interface Invoice {
 }
 
 const statusLabels = {
+  pending: 'En attente',
   active: 'Actif',
-  canceled: 'Annulé',
-  past_due: 'En retard',
-  trialing: 'Période d&apos;essai'
+  cancelled: 'Annulé'
 }
 
 const statusColors = {
+  pending: 'secondary',
   active: 'default',
-  canceled: 'secondary',
-  past_due: 'destructive',
-  trialing: 'default'
+  cancelled: 'destructive'
 } as const
 
 export default function SubscriptionPage() {
   const router = useRouter()
   const { user } = useAuth()
   const { toast } = useToast()
-  const [subscription, setSubscription] = useState<Subscription | null>(null)
+  const [subscriptions, setSubscriptions] = useState<SmarTeenSubscription[]>([])
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -57,39 +62,26 @@ export default function SubscriptionPage() {
     if (!user) return
 
     try {
-      // Fetch active subscription
+      // Fetch SmarTeen subscriptions
       const subscriptionsQuery = query(
-        collection(db, 'customers', user.uid, 'subscriptions'),
-        where('status', 'in', ['active', 'trialing', 'past_due']),
-        limit(1)
+        collection(shopDb, 'smarteenSubscriptions'),
+        where('userId', '==', user.uid),
+        orderBy('billing.nextBilling', 'desc')
       )
       const subscriptionsSnapshot = await getDocs(subscriptionsQuery)
+      const subscriptionsData: SmarTeenSubscription[] = []
       
-      if (!subscriptionsSnapshot.empty) {
-        const subDoc = subscriptionsSnapshot.docs[0]
-        setSubscription({
-          id: subDoc.id,
-          ...subDoc.data()
-        } as Subscription)
-      }
-
-      // Fetch recent invoices
-      const invoicesQuery = query(
-        collection(db, 'customers', user.uid, 'invoices'),
-        orderBy('created', 'desc'),
-        limit(5)
-      )
-      const invoicesSnapshot = await getDocs(invoicesQuery)
-      const invoicesData: Invoice[] = []
-      
-      invoicesSnapshot.forEach((doc) => {
-        invoicesData.push({
+      subscriptionsSnapshot.forEach((doc) => {
+        subscriptionsData.push({
           id: doc.id,
           ...doc.data()
-        } as Invoice)
+        } as SmarTeenSubscription)
       })
       
-      setInvoices(invoicesData)
+      setSubscriptions(subscriptionsData)
+      
+      // TODO: Fetch invoices from Stripe if needed
+      setInvoices([])
     } catch (error) {
       console.error('Error fetching subscription data:', error)
       toast({
@@ -110,16 +102,15 @@ export default function SubscriptionPage() {
     fetchSubscriptionData()
   }, [user, router, fetchSubscriptionData])
 
-  const handleManageSubscription = async () => {
+  const handleManageSubscription = async (customerId: string) => {
     try {
-      // In production, this would redirect to Stripe Customer Portal
-      const response = await fetch('/api/create-portal-session', {
+      const response = await fetch('/api/stripe/portal', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          customerId: user?.uid,
+          customerId: customerId,
         }),
       })
 
@@ -156,49 +147,83 @@ export default function SubscriptionPage() {
           </div>
         </div>
 
-        {subscription ? (
+        {subscriptions.length > 0 ? (
           <>
-            <Card className="mb-6">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Abonnement actuel</CardTitle>
-                  <Badge variant={statusColors[subscription.status]}>
-                    {statusLabels[subscription.status]}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2 text-muted-foreground">
-                    <Calendar className="h-4 w-4" />
-                    <span>Prochaine facturation</span>
-                  </div>
-                  <span className="font-medium">
-                    {format(subscription.currentPeriodEnd.toDate(), 'PPP', { locale: fr })}
-                  </span>
-                </div>
+            <div className="space-y-6 mb-6">
+              {subscriptions.map((subscription) => (
+                <Card key={subscription.id}>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle>Abonnement SmarTeen</CardTitle>
+                        <CardDescription>
+                          Commande #{subscription.orderId}
+                        </CardDescription>
+                      </div>
+                      <Badge variant={statusColors[subscription.status]}>
+                        {statusLabels[subscription.status]}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2 text-muted-foreground">
+                        <CreditCard className="h-4 w-4" />
+                        <span>Montant mensuel</span>
+                      </div>
+                      <span className="font-medium">
+                        {subscription.billing.amount} €/mois
+                      </span>
+                    </div>
 
-                {subscription.cancelAtPeriodEnd && (
-                  <div className="flex items-center space-x-2 text-amber-600 bg-amber-50 p-3 rounded-md">
-                    <AlertCircle className="h-4 w-4" />
-                    <p className="text-sm">
-                      Votre abonnement sera annulé le {format(subscription.currentPeriodEnd.toDate(), 'PPP', { locale: fr })}
-                    </p>
-                  </div>
-                )}
+                    {subscription.billing.nextBilling && (
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2 text-muted-foreground">
+                          <Calendar className="h-4 w-4" />
+                          <span>Prochaine facturation</span>
+                        </div>
+                        <span className="font-medium">
+                          {format(subscription.billing.nextBilling.toDate(), 'PPP', { locale: fr })}
+                        </span>
+                      </div>
+                    )}
 
-                <div className="flex space-x-4">
-                  <Button onClick={handleManageSubscription}>
-                    Gérer l&apos;abonnement
-                  </Button>
-                  {subscription.cancelAtPeriodEnd && (
-                    <Button variant="outline" onClick={handleManageSubscription}>
-                      Réactiver l&apos;abonnement
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+                    {subscription.status === 'pending' && (
+                      <div className="flex items-center space-x-2 text-blue-600 bg-blue-50 p-3 rounded-md">
+                        <AlertCircle className="h-4 w-4" />
+                        <p className="text-sm">
+                          L&apos;abonnement démarrera après la livraison de votre téléphone.
+                        </p>
+                      </div>
+                    )}
+
+                    {subscription.status === 'cancelled' && subscription.activation.cancelledDate && (
+                      <div className="flex items-center space-x-2 text-red-600 bg-red-50 p-3 rounded-md">
+                        <AlertCircle className="h-4 w-4" />
+                        <p className="text-sm">
+                          Abonnement annulé le {format(subscription.activation.cancelledDate.toDate(), 'PPP', { locale: fr })}
+                        </p>
+                      </div>
+                    )}
+
+                    {subscription.status === 'active' && subscription.stripeSubscriptionId && (
+                      <div className="flex space-x-4">
+                        <Button onClick={() => {
+                          // Pour récupérer le customerId, il faut le chercher dans la commande
+                          // TODO: Récupérer le customerId depuis la commande associée
+                          toast({
+                            title: 'Fonctionnalité à venir',
+                            description: 'Le portail de gestion sera bientôt disponible.',
+                          })
+                        }}>
+                          Gérer l&apos;abonnement
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
 
             <Card>
               <CardHeader>
@@ -253,10 +278,10 @@ export default function SubscriptionPage() {
             <CardContent className="text-center py-12">
               <CreditCard className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground mb-4">
-                Vous n&apos;avez pas d&apos;abonnement actif
+                Vous n&apos;avez pas d&apos;abonnement
               </p>
-              <Button onClick={() => router.push('/pricing')}>
-                Voir les offres
+              <Button onClick={() => router.push('/smarteen-phone')}>
+                Commander un SmarTeen Phone
               </Button>
             </CardContent>
           </Card>

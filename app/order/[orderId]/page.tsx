@@ -9,61 +9,74 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
-import { db } from '@/lib/firebase'
+import { shopDb } from '@/lib/firebase/config'
 import { doc, getDoc } from 'firebase/firestore'
 import { useAuth } from '@/hooks/useAuth'
 import Image from 'next/image'
 
-interface OrderItem {
+interface SmarTeenOrder {
   id: string
-  name: string
-  price: number
-  quantity: number
-  image?: string
-}
-
-interface Order {
-  id: string
+  orderNumber: string
   userId: string
-  items: OrderItem[]
-  amount: number
-  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
-  createdAt: any
-  shippingAddress?: {
+  status: 'pending' | 'confirmed' | 'processed' | 'shipped' | 'delivered' | 'activated'
+  product: {
     name: string
-    line1: string
-    line2?: string
-    city: string
-    postalCode: string
-    country: string
+    devicePrice: number
+    subscriptionPrice: number
   }
-  paymentMethod?: {
-    type: string
-    last4?: string
+  child: {
+    firstName: string
+    age: number
+    protectionLevel: string
+  }
+  shipping: {
+    address: {
+      street: string
+      city: string
+      postalCode: string
+      country: string
+    }
+    phone: string
+  }
+  stripe: {
+    checkoutSessionId: string
+    customerId?: string
+    subscriptionId?: string
+    paymentIntentId?: string
+  }
+  timeline: {
+    ordered: any
+    confirmed?: any
+    processed?: any
+    shipped?: any
+    delivered?: any
+    subscriptionActivated?: any
   }
 }
 
 const statusLabels = {
-  pending: 'En attente',
-  processing: 'En cours de traitement',
+  pending: 'En attente de paiement',
+  confirmed: 'Confirmée',
+  processed: 'En cours de traitement',
   shipped: 'Expédiée',
   delivered: 'Livrée',
-  cancelled: 'Annulée'
+  activated: 'Abonnement activé'
 }
 
 const statusColors = {
   pending: 'secondary',
-  processing: 'default',
+  confirmed: 'default',
+  processed: 'default',
   shipped: 'default',
   delivered: 'default',
-  cancelled: 'destructive'
+  activated: 'default'
 } as const
 
 export default function OrderDetailsPage() {
   const params = useParams()
   const router = useRouter()
   const { user } = useAuth()
-  const [order, setOrder] = useState<Order | null>(null)
+  const [order, setOrder] = useState<SmarTeenOrder | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -74,9 +87,9 @@ export default function OrderDetailsPage() {
       }
 
       try {
-        const orderDoc = await getDoc(doc(db, 'orders', params.orderId as string))
+        const orderDoc = await getDoc(doc(shopDb, 'smarteenOrders', params.orderId as string))
         if (orderDoc.exists()) {
-          const orderData = { id: orderDoc.id, ...orderDoc.data() } as Order
+          const orderData = { id: orderDoc.id, ...orderDoc.data() } as SmarTeenOrder
           
           // Verify the order belongs to the current user
           if (orderData.userId !== user.uid) {
@@ -132,9 +145,9 @@ export default function OrderDetailsPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Commande #{order.id.slice(-8)}</CardTitle>
+                  <CardTitle>Commande #{order.orderNumber}</CardTitle>
                   <CardDescription>
-                    Passée le {format(order.createdAt.toDate(), 'PPP', { locale: fr })}
+                    Passée le {format(order.timeline.ordered.toDate(), 'PPP', { locale: fr })}
                   </CardDescription>
                 </div>
                 <Badge variant={statusColors[order.status]}>
@@ -144,78 +157,91 @@ export default function OrderDetailsPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {order.items.map((item) => (
-                  <div key={item.id} className="flex items-center space-x-4">
-                    {item.image && (
-                      <Image
-                        src={item.image}
-                        alt={item.name}
-                        width={64}
-                        height={64}
-                        className="rounded-md object-cover"
-                      />
-                    )}
-                    <div className="flex-1">
-                      <p className="font-medium">{item.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        Quantité: {item.quantity}
-                      </p>
-                    </div>
-                    <p className="font-medium">{(item.price * item.quantity) / 100} €</p>
+                <div className="flex items-center space-x-4">
+                  <Image
+                    src="/images/smarteen-phone.svg"
+                    alt={order.product.name}
+                    width={64}
+                    height={64}
+                    className="rounded-md object-cover"
+                  />
+                  <div className="flex-1">
+                    <p className="font-medium">{order.product.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Pour {order.child.firstName}, {order.child.age} ans
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Protection {order.child.protectionLevel}
+                    </p>
                   </div>
-                ))}
+                  <p className="font-medium">{order.product.devicePrice} €</p>
+                </div>
               </div>
               
               <Separator className="my-4" />
               
-              <div className="flex justify-between text-lg font-medium">
-                <span>Total</span>
-                <span>{order.amount / 100} €</span>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span>Téléphone</span>
+                  <span>{order.product.devicePrice} €</span>
+                </div>
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>Abonnement mensuel (après livraison)</span>
+                  <span>{order.product.subscriptionPrice} €/mois</span>
+                </div>
+                <Separator className="my-2" />
+                <div className="flex justify-between text-lg font-medium">
+                  <span>Total à payer aujourd&rsquo;hui</span>
+                  <span>{order.product.devicePrice} €</span>
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          {order.shippingAddress && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center text-base">
-                  <MapPin className="mr-2 h-4 w-4" />
-                  Adresse de livraison
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <address className="not-italic text-sm">
-                  <p className="font-medium">{order.shippingAddress.name}</p>
-                  <p>{order.shippingAddress.line1}</p>
-                  {order.shippingAddress.line2 && <p>{order.shippingAddress.line2}</p>}
-                  <p>
-                    {order.shippingAddress.postalCode} {order.shippingAddress.city}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center text-base">
+                <MapPin className="mr-2 h-4 w-4" />
+                Adresse de livraison
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <address className="not-italic text-sm">
+                <p>{order.shipping.address.street}</p>
+                <p>
+                  {order.shipping.address.postalCode} {order.shipping.address.city}
+                </p>
+                <p>{order.shipping.address.country}</p>
+                {order.shipping.phone && (
+                  <p className="mt-2">
+                    <span className="text-muted-foreground">Téléphone: </span>
+                    {order.shipping.phone}
                   </p>
-                  <p>{order.shippingAddress.country}</p>
-                </address>
-              </CardContent>
-            </Card>
-          )}
+                )}
+              </address>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="space-y-6">
-          {order.paymentMethod && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center text-base">
-                  <CreditCard className="mr-2 h-4 w-4" />
-                  Méthode de paiement
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm">
-                  {order.paymentMethod.type === 'card' && order.paymentMethod.last4
-                    ? `Carte se terminant par ${order.paymentMethod.last4}`
-                    : order.paymentMethod.type}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center text-base">
+                <CreditCard className="mr-2 h-4 w-4" />
+                Paiement
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm">
+                Paiement sécurisé via Stripe
+              </p>
+              {order.stripe.paymentIntentId && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  ID: {order.stripe.paymentIntentId}
                 </p>
-              </CardContent>
-            </Card>
-          )}
+              )}
+            </CardContent>
+          </Card>
 
           <Card>
             <CardHeader>
@@ -225,15 +251,60 @@ export default function OrderDetailsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2 text-sm">
+              <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Statut</span>
                   <span className="font-medium">{statusLabels[order.status]}</span>
                 </div>
-                {order.status === 'shipped' && (
+                
+                {order.timeline.confirmed && (
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Numéro de suivi</span>
-                    <span className="font-medium">Bientôt disponible</span>
+                    <span className="text-muted-foreground">Confirmée le</span>
+                    <span>{format(order.timeline.confirmed.toDate(), 'PPp', { locale: fr })}</span>
+                  </div>
+                )}
+                
+                {order.timeline.processed && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">En traitement le</span>
+                    <span>{format(order.timeline.processed.toDate(), 'PPp', { locale: fr })}</span>
+                  </div>
+                )}
+                
+                {order.timeline.shipped && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Expédiée le</span>
+                    <span>{format(order.timeline.shipped.toDate(), 'PPp', { locale: fr })}</span>
+                  </div>
+                )}
+                
+                {order.timeline.delivered && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Livrée le</span>
+                    <span>{format(order.timeline.delivered.toDate(), 'PPp', { locale: fr })}</span>
+                  </div>
+                )}
+                
+                {order.timeline.subscriptionActivated && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Abonnement activé le</span>
+                    <span>{format(order.timeline.subscriptionActivated.toDate(), 'PPp', { locale: fr })}</span>
+                  </div>
+                )}
+                
+                {order.status === 'confirmed' && (
+                  <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
+                    <p className="text-blue-800 dark:text-blue-200 text-xs">
+                      📦 Votre commande est confirmée ! Nous la traiterons dès que nous aurons suffisamment de commandes groupées.
+                    </p>
+                  </div>
+                )}
+                
+                {order.status === 'delivered' && order.stripe.subscriptionId && (
+                  <div className="mt-3 p-3 bg-green-50 dark:bg-green-950 rounded-lg">
+                    <p className="text-green-800 dark:text-green-200 text-xs">
+                      🎉 Téléphone livré ! L&apos;abonnement de {order.product.subscriptionPrice}€/mois démarrera bientôt.
+                    </p>
                   </div>
                 )}
               </div>

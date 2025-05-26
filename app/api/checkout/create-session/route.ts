@@ -32,6 +32,7 @@ export async function POST(request: NextRequest) {
       userEmail,
       child: childConfig,
       shippingAddress,
+      phone,
     });
 
     // Créer un brouillon de commande dans Firestore
@@ -62,6 +63,17 @@ export async function POST(request: NextRequest) {
     };
 
     await setDoc(doc(shopDb, 'smarteenOrders', session.id), orderData);
+
+    // Ajouter l'enfant à la collection children
+    await setDoc(doc(shopDb, 'smarteenUsers', userId, 'children', session.id), {
+      firstName: childConfig.firstName,
+      birthDate: childConfig.birthDate,
+      age: new Date().getFullYear() - new Date(childConfig.birthDate).getFullYear(),
+      protectionLevel: childConfig.protectionLevel,
+      orderId: session.id,
+      status: 'pending',
+      createdAt: new Date(),
+    });
 
     return NextResponse.json({ sessionId: session.id });
   } catch (error: any) {

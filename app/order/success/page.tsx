@@ -5,27 +5,33 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { db } from '@/lib/firebase'
+import { shopDb } from '@/lib/firebase/config'
 import { doc, getDoc } from 'firebase/firestore'
+import { useCartStore } from '@/stores/cartStore'
 
 function OrderSuccessContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const { clearCart } = useCartStore()
   const [order, setOrder] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
-  const orderId = searchParams.get('orderId')
   const sessionId = searchParams.get('session_id')
 
   useEffect(() => {
+    // Vider le panier dès l'arrivée sur la page de succès
+    clearCart()
+  }, [clearCart])
+
+  useEffect(() => {
     const fetchOrder = async () => {
-      if (!orderId) {
+      if (!sessionId) {
         setLoading(false)
         return
       }
 
       try {
-        const orderDoc = await getDoc(doc(db, 'orders', orderId))
+        const orderDoc = await getDoc(doc(shopDb, 'smarteenOrders', sessionId))
         if (orderDoc.exists()) {
           setOrder({ id: orderDoc.id, ...orderDoc.data() })
         }
@@ -37,7 +43,7 @@ function OrderSuccessContent() {
     }
 
     fetchOrder()
-  }, [orderId])
+  }, [sessionId])
 
   if (loading) {
     return (
@@ -56,25 +62,40 @@ function OrderSuccessContent() {
           </div>
           <CardTitle className="text-2xl">Commande confirmée !</CardTitle>
           <CardDescription>
-            Merci pour votre commande. Vous recevrez un email de confirmation dans quelques instants.
+            Votre SmarTeen Phone a été commandé ! Nous la traiterons dès que nous aurons suffisamment de commandes groupées.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {order && (
-            <div className="border rounded-lg p-4 space-y-2">
-              <p className="text-sm text-muted-foreground">Numéro de commande</p>
-              <p className="font-mono font-medium">{order.id}</p>
-              <p className="text-sm text-muted-foreground mt-4">Montant total</p>
-              <p className="text-2xl font-bold">{order.amount / 100} €</p>
+            <div className="border rounded-lg p-4 space-y-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Numéro de commande</p>
+                <p className="font-mono font-medium">#{order.orderNumber}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Produit</p>
+                <p className="font-medium">{order.product?.name} pour {order.child?.firstName}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Montant payé aujourd&#39;hui</p>
+                <p className="text-2xl font-bold">{order.product?.devicePrice} €</p>
+                <p className="text-xs text-muted-foreground">+ {order.product?.subscriptionPrice}€/mois après livraison</p>
+              </div>
             </div>
           )}
+          
+          <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg">
+            <p className="text-blue-800 dark:text-blue-200 text-sm">
+              📦 Votre commande sera traitée en lot pour optimiser les coûts. L&#39;abonnement de {order?.product?.subscriptionPrice}€/mois ne démarrera qu&#39;après réception du téléphone.
+            </p>
+          </div>
           
           <div className="flex flex-col sm:flex-row gap-4">
             <Button 
               onClick={() => router.push('/account/orders')}
               className="flex-1"
             >
-              Voir mes commandes
+              Suivre ma commande
             </Button>
             <Button 
               onClick={() => router.push('/')}

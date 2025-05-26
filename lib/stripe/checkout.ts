@@ -76,6 +76,17 @@ export const createCheckoutSession = async (data: CheckoutData) => {
         },
       ],
       
+      // Pré-remplir avec les données existantes
+      shipping_options: [
+        {
+          shipping_rate_data: {
+            type: 'fixed_amount',
+            fixed_amount: { amount: 0, currency: 'eur' },
+            display_name: 'Livraison gratuite',
+          },
+        },
+      ],
+      
       // Collecte des informations de livraison
       shipping_address_collection: {
         allowed_countries: ['FR', 'BE', 'CH', 'LU'], // France et pays limitrophes
@@ -95,9 +106,10 @@ export const createCheckoutSession = async (data: CheckoutData) => {
       },
       
       // Texte de consentement pour l'abonnement
-      consent_collection: {
-        terms_of_service: 'required',
-      },
+      // Temporairement désactivé - à réactiver après configuration dans Stripe Dashboard
+      // consent_collection: {
+      //   terms_of_service: 'required',
+      // },
       
       custom_text: {
         submit: {

@@ -59,6 +59,9 @@ export async function POST(request: NextRequest) {
         const shippingDetails = session.shipping_details;
         const orderData = orderSnap.data();
         
+        console.log('Session shipping_details:', JSON.stringify(shippingDetails, null, 2));
+        console.log('Session customer_details:', JSON.stringify(session.customer_details, null, 2));
+        
         await updateDoc(orderRef, {
           status: 'confirmed',
           'stripe.customerId': customerId,
@@ -72,6 +75,9 @@ export async function POST(request: NextRequest) {
           } : orderData.shipping.address,
           'shipping.phone': session.customer_details?.phone || '',
           'timeline.confirmed': new Date(),
+          // Ajouter les liens
+          'links.subscriptionId': subscription.id,
+          'links.childId': session.id, // L'enfant a le même ID que la session
         });
         
         // Mettre à jour le profil utilisateur avec les informations de livraison si elles sont fournies
@@ -99,7 +105,23 @@ export async function POST(request: NextRequest) {
           billing: {
             amount: 9.99,
           },
+          // Ajouter les liens
+          links: {
+            orderId: session.id,
+            childId: session.id,
+          },
         });
+
+        // Mettre à jour l'enfant avec le lien vers l'abonnement
+        if (session.metadata?.userId) {
+          const childRef = doc(shopDb, 'smarteenUsers', session.metadata.userId, 'children', session.id);
+          await updateDoc(childRef, {
+            status: 'confirmed',
+            'links.subscriptionId': subscription.id,
+            'links.orderId': session.id,
+            confirmedAt: new Date(),
+          });
+        }
 
         break;
       }

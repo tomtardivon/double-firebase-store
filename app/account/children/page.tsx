@@ -11,15 +11,23 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useToast } from '@/components/ui/use-toast'
 import { useAuth } from '@/hooks/useAuth'
-import { db } from '@/lib/firebase'
-import { collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore'
+import { shopDb } from '@/lib/firebase/config'
+import { collection, query, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore'
 
-interface Child {
+interface SmarTeenChild {
   id: string
-  name: string
+  firstName: string
   age: number
-  gender: 'male' | 'female' | 'other'
-  birthDate: string
+  protectionLevel: 'strict' | 'moderate'
+  birthDate: any
+  orderId?: string
+  status: 'pending' | 'confirmed' | 'delivered' | 'manual'
+  links?: {
+    subscriptionId?: string
+    orderId?: string
+  }
+  createdAt: any
+  confirmedAt?: any
 }
 
 export default function ChildrenPage() {

@@ -3,6 +3,8 @@
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { shopDb } from '@/lib/firebase/config';
 import Link from 'next/link';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -21,6 +23,11 @@ export default function AccountPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [stats, setStats] = useState({
+    childrenCount: 0,
+    ordersCount: 0,
+    activeSubscriptions: 0
+  });
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
     newPassword: '',
@@ -66,6 +73,51 @@ export default function AccountPage() {
       });
     }
   }, [smarteenUser]);
+
+  // Récupérer les statistiques utilisateur
+  useEffect(() => {
+    const fetchStats = async () => {
+      if (!user?.uid) return;
+
+      try {
+        // Compter les enfants depuis la sous-collection
+        const childrenQuery = query(
+          collection(shopDb, 'smarteenUsers', user.uid, 'children')
+        );
+        const childrenSnapshot = await getDocs(childrenQuery);
+        const childrenCount = childrenSnapshot.size;
+
+        // Compter les commandes
+        const ordersQuery = query(
+          collection(shopDb, 'smarteenOrders'),
+          where('userId', '==', user.uid)
+        );
+        const ordersSnapshot = await getDocs(ordersQuery);
+        const ordersCount = ordersSnapshot.size;
+
+        // Compter les abonnements actifs
+        const subscriptionsQuery = query(
+          collection(shopDb, 'smarteenSubscriptions'),
+          where('userId', '==', user.uid),
+          where('status', '==', 'active')
+        );
+        const subscriptionsSnapshot = await getDocs(subscriptionsQuery);
+        const activeSubscriptions = subscriptionsSnapshot.size;
+
+        setStats({
+          childrenCount,
+          ordersCount,
+          activeSubscriptions
+        });
+      } catch (error) {
+        console.error('Erreur récupération stats:', error);
+      }
+    };
+
+    if (user && isAuthenticated) {
+      fetchStats();
+    }
+  }, [user, smarteenUser, isAuthenticated]);
 
   const handleOpenModal = () => {
     setIsModalOpen(true);
@@ -215,7 +267,7 @@ export default function AccountPage() {
               <span className="text-2xl">👨‍👩‍👧‍👦</span>
             </div>
             <p className="text-sm text-gray-600">
-              {smarteenUser?.children?.length || 0} enfant(s) enregistré(s)
+              {stats.childrenCount} enfant(s) enregistré(s)
             </p>
             <p className="mt-2 text-primary-600 text-sm font-medium">
               Gérer →
@@ -228,7 +280,7 @@ export default function AccountPage() {
               <span className="text-2xl">📦</span>
             </div>
             <p className="text-sm text-gray-600">
-              {smarteenUser?.orders?.totalOrders || 0} commande(s)
+              {stats.ordersCount} commande(s)
             </p>
             <p className="mt-2 text-primary-600 text-sm font-medium">
               Voir tout →
@@ -241,7 +293,7 @@ export default function AccountPage() {
               <span className="text-2xl">💳</span>
             </div>
             <p className="text-sm text-gray-600">
-              {smarteenUser?.orders?.activeSubscriptions || 0} abonnement(s) actif(s)
+              {stats.activeSubscriptions} abonnement(s) actif(s)
             </p>
             <p className="mt-2 text-primary-600 text-sm font-medium">
               Gérer →
