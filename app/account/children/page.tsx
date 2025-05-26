@@ -34,36 +34,30 @@ export default function ChildrenPage() {
   const router = useRouter()
   const { user } = useAuth()
   const { toast } = useToast()
-  const [children, setChildren] = useState<Child[]>([])
+  const [children, setChildren] = useState<SmarTeenChild[]>([])
   const [loading, setLoading] = useState(true)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [editingChild, setEditingChild] = useState<Child | null>(null)
+  const [editingChild, setEditingChild] = useState<SmarTeenChild | null>(null)
   const [formData, setFormData] = useState({
-    name: '',
+    firstName: '',
     birthDate: '',
-    gender: 'male' as 'male' | 'female' | 'other',
+    protectionLevel: 'moderate' as 'strict' | 'moderate',
   })
 
   const fetchChildren = useCallback(async () => {
     if (!user) return
 
     try {
-      const q = query(collection(db, 'children'), where('userId', '==', user.uid))
+      const q = query(collection(shopDb, 'smarteenUsers', user.uid, 'children'))
       const querySnapshot = await getDocs(q)
-      const childrenData: Child[] = []
+      const childrenData: SmarTeenChild[] = []
       
       querySnapshot.forEach((doc) => {
         const data = doc.data()
-        const birthDate = data.birthDate.toDate()
-        const age = calculateAge(birthDate)
-        
         childrenData.push({
           id: doc.id,
-          name: data.name,
-          age,
-          gender: data.gender,
-          birthDate: birthDate.toISOString().split('T')[0],
-        })
+          ...data
+        } as SmarTeenChild)
       })
       
       setChildren(childrenData)
@@ -87,17 +81,6 @@ export default function ChildrenPage() {
     fetchChildren()
   }, [user, router, fetchChildren])
 
-  const calculateAge = (birthDate: Date): number => {
-    const today = new Date()
-    let age = today.getFullYear() - birthDate.getFullYear()
-    const monthDiff = today.getMonth() - birthDate.getMonth()
-    
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--
-    }
-    
-    return age
-  }
 
   const handleSubmit = async () => {
     if (!user) return
@@ -105,10 +88,11 @@ export default function ChildrenPage() {
     try {
       if (editingChild) {
         // Update existing child
-        await updateDoc(doc(db, 'children', editingChild.id), {
-          name: formData.name,
+        await updateDoc(doc(shopDb, 'smarteenUsers', user.uid, 'children', editingChild.id), {
+          firstName: formData.firstName,
           birthDate: new Date(formData.birthDate),
-          gender: formData.gender,
+          age: new Date().getFullYear() - new Date(formData.birthDate).getFullYear(),
+          protectionLevel: formData.protectionLevel,
           updatedAt: new Date(),
         })
         
@@ -117,14 +101,14 @@ export default function ChildrenPage() {
           description: 'Les informations ont été mises à jour avec succès.',
         })
       } else {
-        // Add new child
-        await addDoc(collection(db, 'children'), {
-          userId: user.uid,
-          name: formData.name,
+        // Add new child (non lié à une commande)
+        await addDoc(collection(shopDb, 'smarteenUsers', user.uid, 'children'), {
+          firstName: formData.firstName,
           birthDate: new Date(formData.birthDate),
-          gender: formData.gender,
+          age: new Date().getFullYear() - new Date(formData.birthDate).getFullYear(),
+          protectionLevel: formData.protectionLevel,
+          status: 'manual', // Différent des enfants créés via commande
           createdAt: new Date(),
-          updatedAt: new Date(),
         })
         
         toast({
@@ -135,7 +119,7 @@ export default function ChildrenPage() {
       
       setIsDialogOpen(false)
       setEditingChild(null)
-      setFormData({ name: '', birthDate: '', gender: 'male' })
+      setFormData({ firstName: '', birthDate: '', protectionLevel: 'moderate' })
       fetchChildren()
     } catch (error) {
       console.error('Error saving child:', error)
@@ -147,21 +131,22 @@ export default function ChildrenPage() {
     }
   }
 
-  const handleEdit = (child: Child) => {
+  const handleEdit = (child: SmarTeenChild) => {
     setEditingChild(child)
     setFormData({
-      name: child.name,
-      birthDate: child.birthDate,
-      gender: child.gender,
+      firstName: child.firstName,
+      birthDate: child.birthDate.toDate().toISOString().split('T')[0],
+      protectionLevel: child.protectionLevel,
     })
     setIsDialogOpen(true)
   }
 
   const handleDelete = async (childId: string) => {
+    if (!user) return
     if (!confirm('Êtes-vous sûr de vouloir supprimer cet enfant ?')) return
 
     try {
-      await deleteDoc(doc(db, 'children', childId))
+      await deleteDoc(doc(shopDb, 'smarteenUsers', user.uid, 'children', childId))
       toast({
         title: 'Enfant supprimé',
         description: 'L\'enfant a été supprimé avec succès.',
@@ -195,13 +180,13 @@ export default function ChildrenPage() {
             </div>
             <div>
               <h1 className="text-2xl font-bold">Mes enfants</h1>
-              <p className="text-muted-foreground">Gérez les profils de vos enfants</p>
+              <p className="text-muted-foreground">Gérez les profils de vos enfants SmarTeen</p>
             </div>
           </div>
           <Button
             onClick={() => {
               setEditingChild(null)
-              setFormData({ name: '', birthDate: '', gender: 'male' })
+              setFormData({ firstName: '', birthDate: '', protectionLevel: 'moderate' })
               setIsDialogOpen(true)
             }}
           >
@@ -215,12 +200,12 @@ export default function ChildrenPage() {
             <CardContent className="text-center py-12">
               <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground mb-4">
-                Vous n&apos;avez pas encore ajouté d&apos;enfant
+                Vous n&apos;avez pas encore d&apos;enfant enregistré
               </p>
               <Button
                 onClick={() => {
                   setEditingChild(null)
-                  setFormData({ name: '', birthDate: '', gender: 'male' })
+                  setFormData({ firstName: '', birthDate: '', protectionLevel: 'moderate' })
                   setIsDialogOpen(true)
                 }}
               >
@@ -234,7 +219,7 @@ export default function ChildrenPage() {
               <Card key={child.id}>
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <CardTitle>{child.name}</CardTitle>
+                    <CardTitle>{child.firstName}</CardTitle>
                     <div className="flex space-x-2">
                       <Button
                         variant="ghost"
@@ -253,13 +238,25 @@ export default function ChildrenPage() {
                     </div>
                   </div>
                   <CardDescription>
-                    {child.age} ans • {child.gender === 'male' ? 'Garçon' : child.gender === 'female' ? 'Fille' : 'Autre'}
+                    {child.age} ans • Protection {child.protectionLevel}
+                    {child.status && (
+                      <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
+                        {child.status === 'confirmed' ? 'Commandé' : child.status === 'pending' ? 'En attente' : child.status}
+                      </span>
+                    )}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    Date de naissance: {new Date(child.birthDate).toLocaleDateString('fr-FR')}
-                  </p>
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">
+                      Date de naissance: {new Date(child.birthDate.toDate()).toLocaleDateString('fr-FR')}
+                    </p>
+                    {child.orderId && (
+                      <p className="text-sm text-muted-foreground">
+                        Commande: #{child.orderId}
+                      </p>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             ))}
@@ -280,11 +277,11 @@ export default function ChildrenPage() {
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Nom de l&apos;enfant</Label>
+                <Label htmlFor="firstName">Prénom de l&apos;enfant</Label>
                 <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  id="firstName"
+                  value={formData.firstName}
+                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                   placeholder="Prénom"
                 />
               </div>
@@ -298,20 +295,19 @@ export default function ChildrenPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="gender">Genre</Label>
+                <Label htmlFor="protectionLevel">Niveau de protection</Label>
                 <Select
-                  value={formData.gender}
-                  onValueChange={(value: 'male' | 'female' | 'other') => 
-                    setFormData({ ...formData, gender: value })
+                  value={formData.protectionLevel}
+                  onValueChange={(value: 'strict' | 'moderate') => 
+                    setFormData({ ...formData, protectionLevel: value })
                   }
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="male">Garçon</SelectItem>
-                    <SelectItem value="female">Fille</SelectItem>
-                    <SelectItem value="other">Autre</SelectItem>
+                    <SelectItem value="moderate">Modérée</SelectItem>
+                    <SelectItem value="strict">Stricte</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -325,7 +321,7 @@ export default function ChildrenPage() {
               </Button>
               <Button
                 onClick={handleSubmit}
-                disabled={!formData.name || !formData.birthDate}
+                disabled={!formData.firstName || !formData.birthDate}
               >
                 {editingChild ? 'Mettre à jour' : 'Ajouter'}
               </Button>
