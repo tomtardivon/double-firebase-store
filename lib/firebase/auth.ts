@@ -5,7 +5,9 @@ import {
   onAuthStateChanged,
   User,
   sendPasswordResetEmail,
-  signInWithCustomToken
+  signInWithCustomToken,
+  GoogleAuthProvider,
+  signInWithPopup
 } from 'firebase/auth';
 import { authService, shopAuth } from './config';
 import { httpsCallable } from 'firebase/functions';
@@ -15,6 +17,9 @@ import { signInDev, signUpDev, generateShopTokenDev } from './auth-dev';
 // Cache pour éviter les connexions multiples
 let isConnectingToShop = false;
 let lastShopConnectionUid: string | null = null;
+
+// Provider Google
+const googleProvider = new GoogleAuthProvider();
 
 // Génération du token pour le projet shop
 export const generateShopToken = async (user: User) => {
@@ -89,6 +94,54 @@ export const signUp = async (email: string, password: string) => {
     return credential.user;
   } catch (error) {
     console.error('Erreur inscription:', error);
+    throw error;
+  }
+};
+
+// Connexion avec Google
+export const signInWithGoogle = async () => {
+  try {
+    // 1. Connexion avec Google sur le projet auth principal
+    const result = await signInWithPopup(authService, googleProvider);
+    const user = result.user;
+    
+    // 2. Vérifier si c'est un nouvel utilisateur
+    const isNewUser = result._tokenResponse?.isNewUser || false;
+    
+    // 3. Génération du token pour le projet shop
+    const shopToken = await generateShopToken(user);
+    
+    // 4. Connexion sur le projet shop
+    if (typeof shopToken === 'string' && process.env.NODE_ENV === 'production') {
+      await signInWithCustomToken(shopAuth, shopToken);
+    }
+    
+    // 5. Si c'est un nouvel utilisateur, créer son profil
+    if (isNewUser) {
+      const { doc, setDoc, serverTimestamp } = await import('firebase/firestore');
+      const { shopDb } = await import('./config');
+      
+      const userDoc = {
+        email: user.email,
+        profile: {
+          firstName: user.displayName?.split(' ')[0] || '',
+          lastName: user.displayName?.split(' ').slice(1).join(' ') || '',
+        },
+        children: [],
+        orders: {
+          totalOrders: 0,
+          activeSubscriptions: 0,
+        },
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      };
+      
+      await setDoc(doc(shopDb, 'smarteenUsers', user.uid), userDoc);
+    }
+    
+    return user;
+  } catch (error) {
+    console.error('Erreur connexion Google:', error);
     throw error;
   }
 };

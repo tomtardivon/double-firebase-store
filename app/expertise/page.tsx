@@ -103,9 +103,9 @@ export default function ExpertisePage() {
               <BookOpen className="h-6 w-6 text-primary" />
             </div>
           </div>
-          <h1 className="text-4xl font-bold mb-4">Centre d'expertise</h1>
+          <h1 className="text-4xl font-bold mb-4">Centre d&#39;expertise</h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Découvrez nos conseils d'experts pour accompagner vos enfants dans leur vie numérique
+            Découvrez nos conseils d&#39;experts pour accompagner vos enfants dans leur vie numérique
           </p>
         </div>
 

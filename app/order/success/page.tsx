@@ -81,7 +81,7 @@ export default function OrderSuccessPage() {
               variant="outline"
               className="flex-1"
             >
-              Retour à l'accueil
+              Retour à l&#39;accueil
             </Button>
           </div>
         </CardContent>

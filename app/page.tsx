@@ -365,7 +365,7 @@ export default function HomePage() {
             viewport={{ once: true }}
             className="text-4xl font-bold mb-6"
           >
-            Offrez la tranquillité d'esprit
+            Offrez la tranquillité d&#39;esprit
           </motion.h2>
           <motion.p 
             initial={{ opacity: 0, y: 20 }}

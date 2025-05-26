@@ -11,6 +11,7 @@ import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { shopDb } from '@/lib/firebase/config';
 import { motion } from 'framer-motion';
 import { UserPlus, Mail, Lock, User } from 'lucide-react';
+import { GoogleButton } from '@/components/auth/google-button';
 
 const registerSchema = z.object({
   firstName: z.string().min(2, 'Le prénom doit contenir au moins 2 caractères'),
@@ -27,7 +28,7 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { register: signUp, isAuthenticated, user } = useAuth();
+  const { register: signUp, loginWithGoogle, isAuthenticated, user } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -202,7 +203,7 @@ export default function RegisterPage() {
           <p className="text-xs text-center text-gray-600">
             En créant un compte, vous acceptez nos{' '}
             <Link href="/legal/terms" className="text-primary-600 hover:text-primary-500">
-              conditions d'utilisation
+              conditions d&apos;utilisation
             </Link>{' '}
             et notre{' '}
             <Link href="/legal/privacy" className="text-primary-600 hover:text-primary-500">
@@ -211,6 +212,25 @@ export default function RegisterPage() {
             .
           </p>
         </form>
+        
+        <div className="mt-6">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-gray-50 text-gray-500">Ou continuer avec</span>
+            </div>
+          </div>
+
+          <div className="mt-6">
+            <GoogleButton 
+              variant="register"
+              loginWithGoogle={loginWithGoogle}
+              onSuccess={() => router.push('/account')}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

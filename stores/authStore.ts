@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { User } from 'firebase/auth';
-import { signIn, signUp, signOut, resetPassword } from '@/lib/firebase/auth';
+import { signIn, signUp, signOut, resetPassword, signInWithGoogle } from '@/lib/firebase/auth';
 import { SmarTeenUser } from '@/types';
 
 interface AuthState {
@@ -12,6 +12,7 @@ interface AuthState {
   error: string | null;
   
   login: (email: string, password: string) => Promise<User>;
+  loginWithGoogle: () => Promise<User>;
   register: (email: string, password: string) => Promise<User>;
   logout: () => Promise<void>;
   resetUserPassword: (email: string) => Promise<void>;
@@ -42,6 +43,26 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch (error: any) {
       set({ 
         error: error.message || 'Erreur de connexion',
+        isLoading: false 
+      });
+      throw error;
+    }
+  },
+  
+  loginWithGoogle: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const user = await signInWithGoogle();
+      set({ 
+        user, 
+        isAuthenticated: true,
+        isShopAuthenticated: true,
+        isLoading: false 
+      });
+      return user;
+    } catch (error: any) {
+      set({ 
+        error: error.message || 'Erreur de connexion Google',
         isLoading: false 
       });
       throw error;

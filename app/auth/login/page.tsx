@@ -9,6 +9,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { motion } from 'framer-motion';
 import { ArrowRight, Mail, Lock } from 'lucide-react';
+import { GoogleButton } from '@/components/auth/google-button';
 
 const loginSchema = z.object({
   email: z.string().email('Email invalide'),
@@ -20,7 +21,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login, isAuthenticated } = useAuth();
+  const { login, loginWithGoogle, isAuthenticated } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   
@@ -181,6 +182,30 @@ export default function LoginPage() {
             </motion.button>
           </motion.div>
         </form>
+        
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="mt-6"
+        >
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">Ou continuer avec</span>
+            </div>
+          </div>
+
+          <div className="mt-6">
+            <GoogleButton 
+              variant="login"
+              loginWithGoogle={loginWithGoogle}
+              onSuccess={() => router.push(callbackUrl)}
+            />
+          </div>
+        </motion.div>
         </div>
       </motion.div>
     </div>

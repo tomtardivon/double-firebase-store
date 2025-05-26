@@ -176,8 +176,8 @@ export default function OrderStatusPage() {
                       <ul className="space-y-1 text-sm text-gray-600">
                         <li>• Votre commande est confirmée et payée ✓</li>
                         <li>• Elle sera expédiée dès que le lot sera complet</li>
-                        <li>• Vous recevrez un email dès l'expédition</li>
-                        <li>• L'abonnement ne démarrera qu'à la réception</li>
+                        <li>• Vous recevrez un email dès l&#39;expédition</li>
+                        <li>• L&#39;abonnement ne démarrera qu&#39;à la réception</li>
                       </ul>
                     </div>
 

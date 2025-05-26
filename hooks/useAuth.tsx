@@ -14,6 +14,7 @@ export const useAuth = () => {
     setUser,
     setSmartteenUser,
     login,
+    loginWithGoogle,
     register,
     logout,
     resetUserPassword
@@ -52,6 +53,7 @@ export const useAuth = () => {
     isAuthenticated,
     isShopAuthenticated,
     login,
+    loginWithGoogle,
     register,
     logout,
     resetPassword: resetUserPassword
