@@ -83,7 +83,7 @@ export default function AboutPage() {
       <motion.section 
         initial="hidden"
         animate="visible"
-        className="bg-gradient-to-br from-primary-50 to-purple-50 py-20"
+        className="bg-gradient-to-br from-blue-50 to-purple-50 py-20"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div variants={stagger} className="text-center">
@@ -145,7 +145,7 @@ export default function AboutPage() {
               viewport={{ once: true }}
               className="relative"
             >
-              <div className="bg-gradient-to-br from-primary-100 to-purple-100 rounded-2xl p-8">
+              <div className="bg-gradient-to-br from-smarteen-blue/10 to-smarteen-purple/10 rounded-2xl p-8">
                 <div className="grid grid-cols-2 gap-4">
                   {milestones.map((milestone, index) => (
                     <motion.div
@@ -153,7 +153,7 @@ export default function AboutPage() {
                       whileHover={{ scale: 1.05 }}
                       className="bg-white rounded-lg p-4 text-center shadow-sm"
                     >
-                      <div className="text-2xl font-bold text-primary-600">
+                      <div className="text-2xl font-bold gradient-text">
                         {milestone.year}
                       </div>
                       <div className="text-sm text-gray-600 mt-1">
@@ -202,9 +202,9 @@ export default function AboutPage() {
                     <motion.div
                       whileHover={{ rotate: 360 }}
                       transition={{ duration: 0.5 }}
-                      className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4"
+                      className="w-16 h-16 bg-smarteen-blue/10 rounded-full flex items-center justify-center mx-auto mb-4"
                     >
-                      <value.icon className="h-8 w-8 text-primary-600" />
+                      <value.icon className="h-8 w-8 text-smarteen-blue" />
                     </motion.div>
                     <h3 className="font-semibold text-lg mb-2">{value.title}</h3>
                     <p className="text-gray-600 text-sm">{value.description}</p>
@@ -248,14 +248,14 @@ export default function AboutPage() {
               >
                 <motion.div
                   whileHover={{ scale: 1.05 }}
-                  className="w-32 h-32 bg-gradient-to-br from-primary-200 to-purple-200 rounded-full mx-auto mb-4 flex items-center justify-center"
+                  className="w-32 h-32 smarteen-gradient rounded-full mx-auto mb-4 flex items-center justify-center"
                 >
                   <div className="text-3xl font-bold text-white">
                     {member.name.split(' ').map(n => n[0]).join('')}
                   </div>
                 </motion.div>
                 <h3 className="font-semibold text-lg">{member.name}</h3>
-                <p className="text-primary-600 text-sm mb-2">{member.role}</p>
+                <p className="gradient-text text-sm mb-2 font-medium">{member.role}</p>
                 <p className="text-gray-600 text-sm">{member.bio}</p>
               </motion.div>
             ))}
@@ -302,7 +302,7 @@ export default function AboutPage() {
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
-        className="py-16 bg-gradient-to-r from-primary-600 to-purple-600"
+        className="py-16 smarteen-gradient"
       >
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.h2 

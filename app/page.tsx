@@ -95,7 +95,7 @@ export default function HomePage() {
               </motion.p>
               
               <motion.div variants={fadeInUp} className="flex items-baseline space-x-4">
-                <span className="text-4xl font-bold text-primary-600">
+                <span className="text-4xl font-bold gradient-text">
                   {formatPrice(289)}
                 </span>
                 <span className="text-gray-500">+ {formatPrice(9.99)}/mois</span>
@@ -113,8 +113,8 @@ export default function HomePage() {
                     whileHover={{ x: 5 }}
                     className="flex items-center space-x-3"
                   >
-                    <div className="bg-primary-100 p-2 rounded-lg">
-                      <feature.icon className="h-5 w-5 text-primary-600" />
+                    <div className="bg-smarteen-blue/10 p-2 rounded-lg">
+                      <feature.icon className="h-5 w-5 text-smarteen-blue" />
                     </div>
                     <span className="text-gray-700">{feature.text}</span>
                   </motion.div>
@@ -138,7 +138,7 @@ export default function HomePage() {
                     repeat: Infinity,
                     repeatType: "reverse"
                   }}
-                  className="bg-gradient-to-br from-primary-400 to-purple-400 rounded-3xl p-8 shadow-2xl"
+                  className="smarteen-gradient rounded-3xl p-8 shadow-2xl"
                 >
                   <div className="bg-white rounded-2xl p-2 shadow-xl">
                     <div className="aspect-[3/4] bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center relative overflow-hidden">
@@ -165,7 +165,7 @@ export default function HomePage() {
                 <motion.div
                   animate={{ y: [10, -10, 10] }}
                   transition={{ duration: 3, repeat: Infinity, delay: 1 }}
-                  className="absolute -bottom-4 -left-4 bg-primary-600 text-white px-3 py-1 rounded-full text-sm font-semibold shadow-lg"
+                  className="absolute -bottom-4 -left-4 smarteen-gradient text-white px-3 py-1 rounded-full text-sm font-semibold shadow-lg"
                 >
                   Éducatif
                 </motion.div>
@@ -253,7 +253,7 @@ export default function HomePage() {
                           whileTap={{ scale: 0.98 }}
                           className={`p-4 rounded-lg border-2 transition-all ${
                             childConfig.protectionLevel === option.level
-                              ? 'border-primary-600 bg-primary-50'
+                              ? 'border-smarteen-blue bg-smarteen-blue/10'
                               : 'border-gray-200 hover:border-gray-300'
                           }`}
                           onClick={() =>
@@ -363,7 +363,7 @@ export default function HomePage() {
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
-        className="py-16 bg-gradient-to-r from-primary-600 to-purple-600 text-white"
+        className="py-16 smarteen-gradient text-white"
       >
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.h2 

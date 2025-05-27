@@ -131,11 +131,12 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-2xl mx-auto space-y-6">
-        <div className="flex items-center space-x-4 mb-8">
-          <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-            <User className="h-6 w-6 text-primary" />
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-2xl mx-auto space-y-6">
+          <div className="flex items-center space-x-4 mb-8">
+          <div className="h-12 w-12 rounded-full bg-smarteen-blue/10 flex items-center justify-center">
+            <User className="h-6 w-6 text-smarteen-blue" />
           </div>
           <div>
             <h1 className="text-2xl font-bold">Mon profil</h1>
@@ -258,6 +259,7 @@ export default function ProfilePage() {
             </form>
           </CardContent>
         </Card>
+        </div>
       </div>
     </div>
   )
