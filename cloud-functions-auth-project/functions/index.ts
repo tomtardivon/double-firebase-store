@@ -1,30 +1,34 @@
 /**
- * CLOUD FUNCTION À DÉPLOYER DANS LE PROJET FIREBASE AUTH EXISTANT
+ * CLOUD FUNCTION À DÉPLOYER DANS LE FIREBASE AUTH EXISTANT
  * Cette fonction génère un custom token pour permettre l'authentification
  * cross-project vers le projet SmarTeen Shop
  */
 
-import { https, auth } from 'firebase-functions/v1';
+import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
+import * as path from 'path';
 
-// Initialisation admin SDK
+// Initialisation admin SDK pour le projet Auth
 admin.initializeApp();
 
 // Configuration du projet Shop
-const SHOP_PROJECT_ID = 'smarteen-data';
+const SHOP_PROJECT_ID = 'smarteen-data'; // Projet qui stocke les données du shop
 
-// Initialisation de l'app admin pour le projet Shop
+// Initialisation de l'app admin pour le projet Shop avec le service account
+// IMPORTANT: Nous utilisons le service account Firebase Admin SDK par défaut
+// car il a les permissions nécessaires pour générer des custom tokens
+const firebaseAdminServiceAccountPath = path.join(__dirname, 'firebase-admin-service-account.json');
 const shopApp = admin.initializeApp({
+  credential: admin.credential.cert(firebaseAdminServiceAccountPath),
   projectId: SHOP_PROJECT_ID,
-  // Vous devrez configurer un service account pour le projet Shop
-  // et l'utiliser ici pour pouvoir générer des custom tokens
 }, 'shop');
 
-export const generateSmarTeenToken = https
-  .onCall(async (_data: any, context: https.CallableContext) => {
+export const generateSmarTeenToken = functions
+  .region('europe-west1')
+  .https.onCall(async (_data: any, context: functions.https.CallableContext) => {
   // Vérification que l'utilisateur est authentifié
   if (!context.auth) {
-    throw new https.HttpsError(
+    throw new functions.https.HttpsError(
       'unauthenticated',
       'L\'utilisateur doit être authentifié pour accéder à cette fonction'
     );
@@ -34,10 +38,10 @@ export const generateSmarTeenToken = https
   const email = context.auth.token.email;
 
   try {
-    // Récupération des informations utilisateur depuis le projet Auth
+    // Récupération des informations utilisateur depuis le Firebase Auth
     const userRecord = await admin.auth().getUser(uid);
 
-    // Création des custom claims pour le projet Shop
+    // Création des custom claims pour le Firebase Shop (data)
     const customClaims = {
       smarteenAccess: true,
       fromMobileApp: true,
@@ -54,19 +58,19 @@ export const generateSmarTeenToken = https
     };
   } catch (error) {
     console.error('Erreur lors de la génération du token:', error);
-    throw new https.HttpsError(
+    throw new functions.https.HttpsError(
       'internal',
       'Erreur lors de la génération du token d\'authentification'
     );
   }
 });
 
-// Fonction optionnelle pour nettoyer les données utilisateur lors de la suppression
-export const onUserDeleted = auth.user().onDelete(async (user: admin.auth.UserRecord) => {
+// Fonction pour nettoyer les données utilisateur lors de la suppression
+/* export const onUserDeleted = functions
+  .region('europe-west1')
+  .auth.user().onDelete(async (user: admin.auth.UserRecord) => {
   console.log(`Utilisateur ${user.uid} supprimé du projet Auth`);
   
-  // Vous pouvez ajouter ici la logique pour supprimer les données
-  // de l'utilisateur dans le projet Shop si nécessaire
   
   return null;
-});
+}); */

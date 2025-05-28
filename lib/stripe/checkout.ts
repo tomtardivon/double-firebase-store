@@ -133,22 +133,42 @@ export const createSubscriptionForOrder = async (
   orderId: string
 ) => {
   try {
-    // Créer un prix pour l'abonnement
-    const price = await stripe.prices.create({
-      currency: 'eur',
-      unit_amount: 999, // 9.99€
-      recurring: {
-        interval: 'month',
-      },
-      product_data: {
-        name: 'SmarTeen Services',
-      },
+    // Utiliser le produit existant dans Stripe
+    const SMARTEEN_SERVICES_PRODUCT_ID = process.env.STRIPE_SUBSCRIPTION_PRODUCT_ID || 'prod_SO4qCqWfPF6gYh';
+    
+    // Récupérer ou créer le prix pour l'abonnement
+    // D'abord vérifier s'il existe déjà un prix récurrent pour ce produit
+    const existingPrices = await stripe.prices.list({
+      product: SMARTEEN_SERVICES_PRODUCT_ID,
+      type: 'recurring',
+      active: true,
+      limit: 1,
     });
+    
+    let priceId: string;
+    
+    if (existingPrices.data.length > 0 && 
+        existingPrices.data[0].unit_amount === 999 && 
+        existingPrices.data[0].recurring?.interval === 'month') {
+      // Utiliser le prix existant
+      priceId = existingPrices.data[0].id;
+    } else {
+      // Créer un nouveau prix pour ce produit
+      const price = await stripe.prices.create({
+        currency: 'eur',
+        unit_amount: 999, // 9.99€
+        recurring: {
+          interval: 'month',
+        },
+        product: SMARTEEN_SERVICES_PRODUCT_ID,
+      });
+      priceId = price.id;
+    }
     
     // Créer l'abonnement en mode PAUSÉ
     const subscription = await stripe.subscriptions.create({
       customer: customerId,
-      items: [{ price: price.id }],
+      items: [{ price: priceId }],
       metadata: {
         orderId: orderId,
         activationType: 'delivery_triggered',

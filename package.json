@@ -7,7 +7,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "deploy:setup": "./scripts/setup-production.sh",
+    "deploy:production": "./scripts/deploy-production.sh",
+    "deploy:functions": "cd cloud-functions-auth-project/functions && firebase deploy --only functions",
+    "deploy:rules": "firebase use smarteen-shop-prod && firebase deploy --only firestore:rules --rules firestore.production.rules",
+    "deploy:all": "npm run deploy:functions && npm run deploy:rules && npm run deploy:production"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.6.0",
